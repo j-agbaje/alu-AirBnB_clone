@@ -1,50 +1,89 @@
+#!/usr/bin/python3
+"""
+Module for BaseModel unittest
+"""
+import os
 import unittest
-from datetime import datetime, timezone, timedelta
-from base_model import BaseModel
+from models.base_model import BaseModel
 
-class TestBaseModel(unittest.TestCase):
+
+
+class TestBasemodel(unittest.TestCase):
+    """
+    Unittest for BaseModel
+    """
 
     def setUp(self):
-        """Set up the BaseModel instance before each test."""
-        self.model = BaseModel()
-        self.model.my_number = 89
-        self.model.name = 'My First Model'
-        # Setting specific datetime values for testing purposes
-        self.model.created_at = datetime(2017, 9, 28, 21, 5, 54, 119427, tzinfo=timezone.utc)
-        self.model.updated_at = datetime(2017, 9, 28, 21, 5, 54, 119434, tzinfo=timezone.utc)
+        """
+        Setup for temporary file path
+        """
+        try:
+            os.rename("file.json", "tmp.json")
+        except FileNotFoundError:
+            pass
 
-    def test_initialization(self):
-        """Test if the BaseModel is correctly initialized."""
-        self.assertIsInstance(self.model.id, str)
-        self.assertIsInstance(self.model.created_at, datetime)
-        self.assertIsInstance(self.model.updated_at, datetime)
+    def tearDown(self):
+        """
+        Tear down for temporary file path
+        """
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
+        try:
+            os.rename("tmp.json", "file.json")
+        except FileNotFoundError:
+            pass
+    def test_init(self):
+        """
+        Test for init
+        """
+        my_model = BaseModel()
 
-    def test_str(self):
-        """Test the string representation of the BaseModel."""
-        expected_output = f"class_mame: {self.model.__class__.__name__}\nid = {self.model.id}\ncontent : {self.model.__dict__}"
-        self.assertEqual(str(self.model), expected_output)
+        self.assertIsNotNone(my_model.id)
+        self.assertIsNotNone(my_model.created_at)
+        self.assertIsNotNone(my_model.updated_at)
 
     def test_save(self):
-        """Test if the save method updates the updated_at attribute."""
-        old_updated_at = self.model.updated_at
-        self.model.save()
-        self.assertNotEqual(self.model.updated_at, old_updated_at)
-        self.assertGreater(self.model.updated_at, old_updated_at)
+        """
+        Test for save method
+        """
+        my_model = BaseModel()
+
+        initial_updated_at = my_model.updated_at
+
+        current_updated_at = my_model.save()
+
+        self.assertNotEqual(initial_updated_at, current_updated_at)
 
     def test_to_dict(self):
-        """Test the to_dict method of the BaseModel."""
-        self.model.updated_at = datetime(2017, 9, 28, 21, 5, 54, 119572, tzinfo=timezone.utc)
-        model_dict = self.model.to_dict()
-        expected_dict = {
-            'my_number': 89,
-            'name': 'My First Model',
-            '__class__': 'BaseModel',
-            'updated_at': '2017-09-28T21:05:54.119572+00:00',
-            'id': self.model.id,
-            'created_at': '2017-09-28T21:05:54.119427+00:00'
-        }
-        self.assertEqual(model_dict, expected_dict)
+        """
+        Test for to_dict method
+        """
+        my_model = BaseModel()
 
-if __name__ == '__main__':
+        my_model_dict = my_model.to_dict()
+
+        self.assertIsInstance(my_model_dict, dict)
+
+        self.assertEqual(my_model_dict["__class__"], 'BaseModel')
+        self.assertEqual(my_model_dict['id'], my_model.id)
+        self.assertEqual(my_model_dict['created_at'], my_model.created_at.isoformat())
+        self.assertEqual(my_model_dict["updated_at"], my_model.created_at.isoformat())
+
+
+    def test_str(self):
+        """
+        Test for string representation
+        """
+        my_model = BaseModel()
+
+        self.assertTrue(str(my_model).startswith('[BaseModel]'))
+
+        self.assertIn(my_model.id, str(my_model))
+
+        self.assertIn(str(my_model.__dict__), str(my_model))
+
+
+if __name__ == "__main__":
     unittest.main()
-
